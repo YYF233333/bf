@@ -20,6 +20,7 @@ pub enum Instruction {
     JmpNonZero(usize),
     Clear,
     STOP,
+    Undefined,
 }
 
 fn comment(input: &str) -> IResult<&str, Option<Instruction>> {

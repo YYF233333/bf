@@ -8,4 +8,6 @@ edition = "2021"
 [dependencies]
 nom = "7"
 btree_graph = "0.2.2"
-brainfuck = "*"
+
+[profile.release]
+debug = true

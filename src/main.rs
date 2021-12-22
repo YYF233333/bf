@@ -1,4 +1,3 @@
-extern crate brainfuck;
 extern crate btree_graph;
 extern crate nom;
 

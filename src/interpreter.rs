@@ -7,8 +7,7 @@ const SIZE: usize = 30000;
 
 #[derive(Debug, Clone)]
 pub struct VM {
-    insts: Vec<Instruction>,
-    stack: Vec<usize>,
+    insts: [Instruction; SIZE],
     mem: [u8; SIZE as usize],
     pointer: usize,
     pc: usize,
@@ -17,8 +16,7 @@ pub struct VM {
 impl VM {
     pub fn new() -> Self {
         Self {
-            insts: vec![],
-            stack: vec![],
+            insts: [Undefined; SIZE],
             mem: [0; SIZE as usize],
             pointer: 0,
             pc: 0,
@@ -26,7 +24,9 @@ impl VM {
     }
 
     pub fn init(&mut self, insts: Vec<Instruction>) {
-        self.insts = insts;
+        for i in 0..insts.len() {
+            self.insts[i] = insts[i];
+        }
     }
 
     fn store_memory(&mut self, val: u8) {
