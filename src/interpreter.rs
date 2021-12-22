@@ -67,6 +67,9 @@ impl VM {
                       }
                     }
                 },
+                Clear => {
+                    self.store_memory(0);
+                }
                 Input => {
                     self.mem[self.pointer] = stdin().bytes().next().unwrap().unwrap();
                 },
