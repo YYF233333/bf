@@ -1,3 +1,4 @@
 /target
-perf.*
+perf.data
+perf.data.old
 flamegraph.svg

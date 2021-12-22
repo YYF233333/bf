@@ -37,60 +37,84 @@ impl VM {
         self.mem[self.pointer]
     }
 
+    fn add(&mut self, n: i32) {
+        let value = self.load_memory();
+        self.store_memory(if n > 0 {
+            value.wrapping_add(n as u8)
+        } else if n < 0 {
+            value.wrapping_sub(n.abs() as u8)
+        } else {
+            value
+        });
+    }
+
+    fn move_ptr(&mut self, n: i32) {
+        if n > 0 {
+            let n = n as usize;
+            if n <= self.mem.len() && self.pointer < self.mem.len() - n {
+                self.pointer += n;
+            } else {
+                panic!("Pointer overflow");
+            }
+        } else if n < 0 {
+            let n = n.abs() as usize;
+            if self.pointer >= n {
+                self.pointer -= n;
+            } else {
+                panic!("Pointer underflow");
+            }
+        }
+    }
+
+    fn getchar(&mut self) {
+        self.store_memory(stdin().bytes().next().unwrap().unwrap());
+    }
+
+    fn putchar(&mut self) {
+        print!("{}", self.load_memory() as char);
+    }
+
+    fn jmp_zero(&mut self, idx: usize) {
+        if self.load_memory() == 0 {
+            self.pc = idx - 1;
+        }
+    }
+
+    fn jmp_nonzero(&mut self, idx: usize) {
+        if self.load_memory() != 0 {
+            self.pc = idx - 1;
+        }
+    }
+
     pub fn run(&mut self) {
         while self.pc < SIZE {
             match self.insts[self.pc] {
                 Add(n) => {
-                    let value = self.load_memory();
-                    self.store_memory(if n > 0 {
-                        value.wrapping_add(n as u8)
-                    } else if n < 0 {
-                        value.wrapping_sub(n.abs() as u8)
-                    } else {
-                        value
-                    });
-                },
+                    self.add(n);
+                }
                 Move(n) => {
-                    if n > 0 {
-                      let n = n as usize;
-                      if n <= self.mem.len() && self.pointer < self.mem.len() - n {
-                        self.pointer += n;
-                      } else {
-                        panic!("Pointer overflow");
-                      }
-                    } else if n < 0 {
-                      let n = n.abs() as usize;
-                      if self.pointer >= n {
-                        self.pointer -= n;
-                      } else {
-                        panic!("Pointer underflow");
-                      }
-                    }
-                },
+                    self.move_ptr(n);
+                }
                 Clear => {
                     self.store_memory(0);
                 }
                 Input => {
-                    self.mem[self.pointer] = stdin().bytes().next().unwrap().unwrap();
-                },
+                    self.getchar();
+                }
                 Output => {
-                    print!("{}", self.mem[self.pointer] as char);
-                },
+                    self.putchar();
+                }
                 JmpNonZero(idx) => {
-                    if self.load_memory() != 0 {
-                        self.pc = idx - 1;
-                    }
-                },
+                    self.jmp_nonzero(idx);
+                }
                 JmpZero(idx) => {
-                    if self.load_memory() == 0 {
-                        self.pc = idx - 1;
-                    }
+                    self.jmp_zero(idx);
                 }
                 STOP => {
                     eprintln!("STOP");
                     break;
-                },
-                _ => panic!("No Set Test"),
+                }
+                _ => panic!("{}", format!("Unexpected Inst {:?}", self.insts[self.pc])),
             }
             self.pc += 1;
         }
