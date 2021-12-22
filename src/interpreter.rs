@@ -3,7 +3,7 @@ use std::io::*;
 use crate::parser::*;
 use Instruction::*;
 
-const SIZE: usize = 30000;
+const SIZE: usize = 3000;
 
 #[derive(Debug, Clone)]
 pub struct VM {
@@ -50,19 +50,9 @@ impl VM {
 
     fn move_ptr(&mut self, n: i32) {
         if n > 0 {
-            let n = n as usize;
-            if n <= self.mem.len() && self.pointer < self.mem.len() - n {
-                self.pointer += n;
-            } else {
-                panic!("Pointer overflow");
-            }
+            self.pointer += n as usize;
         } else if n < 0 {
-            let n = n.abs() as usize;
-            if self.pointer >= n {
-                self.pointer -= n;
-            } else {
-                panic!("Pointer underflow");
-            }
+            self.pointer -= n.abs() as usize;
         }
     }
 
@@ -87,7 +77,7 @@ impl VM {
     }
 
     pub fn run(&mut self) {
-        while self.pc < SIZE {
+        loop {
             match self.insts[self.pc] {
                 Add(n) => {
                     self.add(n);

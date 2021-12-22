@@ -42,7 +42,7 @@ fn main() {
     vm.init(insts);
     let start = Instant::now();
     vm.run();
-    println!("time cost: {}", start.elapsed().as_secs());
+    println!("time cost: {}", start.elapsed().as_secs_f32());
 }
 
 
