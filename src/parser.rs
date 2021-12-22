@@ -12,6 +12,7 @@ use nom::{
 pub enum Instruction {
     Add(i32),
     Move(i32),
+    AddMove(i32, i32),
     Input,
     Output,
     Set,

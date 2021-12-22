@@ -8,7 +8,7 @@ const SIZE: usize = 30000;
 #[derive(Debug, Clone)]
 pub struct VM {
     insts: [Instruction; SIZE],
-    mem: [u8; SIZE as usize],
+    mem: [u8; SIZE],
     pointer: usize,
     pc: usize,
 }
@@ -93,6 +93,10 @@ impl VM {
                     self.add(n);
                 }
                 Move(n) => {
+                    self.move_ptr(n);
+                }
+                AddMove(m, n) => {
+                    self.add(m);
                     self.move_ptr(n);
                 }
                 Clear => {
