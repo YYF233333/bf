@@ -16,6 +16,8 @@ pub enum Instruction {
     Output,
     Set,
     Test,
+    JmpZero(usize),
+    JmpNonZero(usize),
     STOP,
 }
 

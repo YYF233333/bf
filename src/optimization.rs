@@ -1,5 +1,5 @@
 use btree_graph::{AddEdge, AddVertex, BTreeGraph};
-use std::{collections::BTreeMap, iter::Inspect};
+use std::{collections::BTreeMap};
 
 use crate::parser::*;
 

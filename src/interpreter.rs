@@ -3,14 +3,14 @@ use std::io::*;
 use crate::parser::*;
 use Instruction::*;
 
-const SIZE: i32 = 30000;
+const SIZE: usize = 30000;
 
 #[derive(Debug, Clone)]
 pub struct VM {
     insts: Vec<Instruction>,
     stack: Vec<usize>,
     mem: [u8; SIZE as usize],
-    pointer: i32,
+    pointer: usize,
     pc: usize,
 }
 
@@ -29,64 +29,67 @@ impl VM {
         self.insts = insts;
     }
 
+    fn store_memory(&mut self, val: u8) {
+        self.mem[self.pointer] = val;
+    }
+
+    fn load_memory(&self) -> u8 {
+        self.mem[self.pointer]
+    }
+
     pub fn run(&mut self) {
-        eprintln!("check");
-        while let inst = self.insts[self.pc] {
-            match inst {
-                Add(i) => {
-                    eprintln!("Add");
-                    let mut res = self.mem[self.pointer as usize] as i32 + i;
-                    while res < 0 || res >= 256 {
-                        if res < 0 {
-                            res += 256;
-                        } else if res >= 256 {
-                            res -= 256;
-                        }
+        while self.pc < SIZE {
+            match self.insts[self.pc] {
+                Add(n) => {
+                    let value = self.load_memory();
+                    self.store_memory(if n > 0 {
+                        value.wrapping_add(n as u8)
+                    } else if n < 0 {
+                        value.wrapping_sub(n.abs() as u8)
+                    } else {
+                        value
+                    });
+                },
+                Move(n) => {
+                    if n > 0 {
+                      let n = n as usize;
+                      if n <= self.mem.len() && self.pointer < self.mem.len() - n {
+                        self.pointer += n;
+                      } else {
+                        panic!("Pointer overflow");
+                      }
+                    } else if n < 0 {
+                      let n = n.abs() as usize;
+                      if self.pointer >= n {
+                        self.pointer -= n;
+                      } else {
+                        panic!("Pointer underflow");
+                      }
                     }
-                    eprintln!("res = {}", res);
-                    assert!(res >= 0 && res < 256);
-                    self.mem[self.pointer as usize] = res as u8;
-                }
-                Move(i) => {
-                    eprintln!("Move");
-                    self.pointer += i;
-                    if self.pointer >= SIZE {
-                        self.pointer -= SIZE;
-                    } else if self.pointer < 0 {
-                        self.pointer += SIZE;
-                    }
-                    eprintln!("pointer = {}", self.pointer);
-                }
+                },
                 Input => {
-                    self.mem[self.pointer as usize] = stdin().bytes().next().unwrap().unwrap();
-                }
+                    self.mem[self.pointer] = stdin().bytes().next().unwrap().unwrap();
+                },
                 Output => {
-                    print!("{}", self.mem[self.pointer as usize] as char);
-                }
-                Set => {
-                    eprintln!("Set");
-                    if self.mem[self.pointer as usize] == 0 {
-                        while self.insts[self.pc] != Test {
-                            self.pc += 1;
-                        }
-                    } else {
-                        self.stack.push(self.pc);
+                    print!("{}", self.mem[self.pointer] as char);
+                },
+                JmpNonZero(idx) => {
+                    if self.load_memory() != 0 {
+                        self.pc = idx - 1;
                     }
-                }
-                Test => {
-                    eprintln!("Test");
-                    if self.mem[self.pointer as usize] == 0 {
-                        self.stack.pop().unwrap();
-                    } else {
-                        self.pc = *self.stack.last().unwrap();
+                },
+                JmpZero(idx) => {
+                    if self.load_memory() == 0 {
+                        self.pc = idx - 1;
                     }
                 }
                 STOP => {
+                    eprintln!("STOP");
                     break;
-                }
+                },
+                _ => panic!("No Set Test"),
             }
             self.pc += 1;
-            eprintln!("PC = {}", self.pc);
         }
     }
 }
