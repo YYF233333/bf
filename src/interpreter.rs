@@ -3,11 +3,11 @@ use std::io::*;
 use crate::parser::*;
 use Instruction::*;
 
-const SIZE: usize = 3000;
+const SIZE: usize = 30000;
 
 #[derive(Debug, Clone)]
 pub struct VM {
-    insts: [Instruction; SIZE],
+    insts: Vec<Instruction>,
     mem: [u8; SIZE],
     pointer: usize,
     pc: usize,
@@ -16,7 +16,7 @@ pub struct VM {
 impl VM {
     pub fn new() -> Self {
         Self {
-            insts: [Undefined; SIZE],
+            insts: vec![],
             mem: [0; SIZE as usize],
             pointer: 0,
             pc: 0,
@@ -24,13 +24,19 @@ impl VM {
     }
 
     pub fn init(&mut self, insts: Vec<Instruction>) {
-        for i in 0..insts.len() {
-            self.insts[i] = insts[i];
-        }
+        self.insts = insts;
     }
 
     fn store_memory(&mut self, val: u8) {
         self.mem[self.pointer] = val;
+    }
+
+    fn store_with_offset(&mut self, offset: i32, val: u8) {
+        if offset >= 0 {
+            self.mem[self.pointer + offset as usize] = val;
+        } else {
+            self.mem[self.pointer - offset.abs() as usize] = val;
+        }
     }
 
     fn load_memory(&self) -> u8 {
@@ -53,6 +59,9 @@ impl VM {
             self.pointer += n as usize;
         } else if n < 0 {
             self.pointer -= n.abs() as usize;
+        }
+        if self.pointer >= SIZE {
+            panic!("Pointer Overflow");
         }
     }
 
@@ -88,6 +97,19 @@ impl VM {
                 AddMove(m, n) => {
                     self.add(m);
                     self.move_ptr(n);
+                }
+                Mul(offset, power) => {
+                    eprintln!("offset: {} power: {}", offset, power);
+                    let val = self.load_memory();
+                    if power > 0 {
+                        self.store_with_offset(offset, val.wrapping_mul(power as u8));
+                    } else if power < 0 {
+                        let val = val.wrapping_mul(power.abs() as u8);
+                        let val = 256 - val as u32;
+                        self.store_with_offset(offset, val as u8);
+                    } else {
+                        self.store_with_offset(offset, 0);
+                    }
                 }
                 Clear => {
                     self.store_memory(0);

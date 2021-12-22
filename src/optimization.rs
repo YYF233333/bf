@@ -1,5 +1,5 @@
-use btree_graph::{AddEdge, AddVertex, BTreeGraph};
-use std::collections::BTreeMap;
+//use btree_graph::{AddEdge, AddVertex, BTreeGraph, Adjacent};
+//use std::{collections::BTreeMap};
 
 use crate::parser::*;
 
@@ -18,8 +18,37 @@ impl BasicBlock {
         self.id
     }
 
+    pub fn insts(&self) -> Vec<Instruction> {
+        self.insts.clone()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.insts.is_empty()
+    }
+
+    pub fn clear(&mut self) {
+        self.insts.clear()
+    }
+
+    pub fn last(&self) -> Option<&Instruction> {
+        self.insts.last()
+    }
+
+    pub fn is_leafloop(&self) -> bool {
+        self.insts.first() == Some(&Instruction::Set) &&
+        self.insts.last() == Some(&Instruction::Test)
+    }
+
+    pub fn contains_io(&self) -> bool {
+        for inst in &self.insts {
+            match *inst {
+                Instruction::Input | Instruction::Output => {
+                    return true;
+                },
+                _ => (),
+            }
+        }
+        return false
     }
 
     pub fn push(&mut self, inst: Instruction) {
@@ -27,12 +56,18 @@ impl BasicBlock {
             Instruction::Add(i) => {
                 if let Some(Instruction::Add(j)) = self.insts.last_mut() {
                     *j += i;
+                    if *j == 0 {
+                        self.insts.pop();
+                    }
                     return;
                 }
             }
             Instruction::Move(i) => {
                 if let Some(Instruction::Move(j)) = self.insts.last_mut() {
                     *j += i;
+                    if *j == 0 {
+                        self.insts.pop();
+                    }
                     return;
                 }
             }
@@ -54,6 +89,16 @@ impl From<BasicBlock> for Vec<Instruction> {
     }
 }
 
+impl IntoIterator for BasicBlock {
+    type Item = Instruction;
+
+    type IntoIter = Box<dyn Iterator<Item = Instruction>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Box::new(self.insts.into_iter())
+    }
+}
+/*
 #[derive(Debug)]
 pub struct FlowGraph {
     graph: BTreeGraph<i32, i32>,
@@ -111,3 +156,4 @@ impl FlowGraph {
         insts
     }
 }
+*/
